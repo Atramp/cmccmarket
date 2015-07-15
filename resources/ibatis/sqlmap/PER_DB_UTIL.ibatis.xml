@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//config.ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd" >
+<sqlMap namespace="PER_DB_UTIL">
+
+ 
+  
+  <select id="getSysParametes" resultClass="UpperCaseMap">
+        <![CDATA[
+            SELECT
+               SYS_PAR_ID,APP_ID,SYS_PAR_VALUE,SYS_PAR_DESC
+            FROM
+                per_sys_parametes
+        ]]>
+    </select>
+
+  
+</sqlMap>

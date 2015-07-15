@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE sqlMap
+    PUBLIC "-//config.ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="KPI_SET">
+
+    <select id="getMenus" resultClass="UpperCaseMap">
+        <![CDATA[
+            SELECT
+                KPI_SET_ID,
+                PAR_KPI_SET_ID,
+                KPI_SET_LEVEL,
+                KPI_SET_NAME,
+                CASE PAR_KPI_SET_ID
+                WHEN 'main-1'
+                    THEN
+                        KPI_SET_URL
+                WHEN 'main-4'
+                    THEN
+                        KPI_SET_URL
+                ELSE
+                    CONCAT(
+                      KPI_SET_URL,
+                      '?kpiSetId=',
+                      KPI_SET_ID
+                    )
+                END AS KPI_SET_URL,
+                KPI_SET_SEQ
+            FROM
+                KPI_SET
+            ORDER BY
+                PAR_KPI_SET_ID,KPI_SET_SEQ
+        ]]>
+    </select>
+
+    <select id="getMenusByUser" resultClass="UpperCaseMap">
+        <![CDATA[
+            SELECT
+                KS.KPI_SET_ID,
+                KS.PAR_KPI_SET_ID,
+                KS.KPI_SET_LEVEL,
+                KS.KPI_SET_NAME,
+                CASE KS.KPI_SET_URL
+                  WHEN ''
+                  THEN
+                      NULL
+                  ELSE
+                    CONCAT(
+                        KS.KPI_SET_URL,
+                        '?kpiSetId=',
+                        KS.KPI_SET_ID,
+                        '&download=',
+                        PRM.MENU_DOWNLOAD
+                    )
+                  END AS KPI_SET_URL,
+                  KPI_SET_SEQ
+            FROM
+                PER_USERS PU
+                INNER JOIN PER_ROLE_USER PRU
+                  ON PU.USER_ID = PRU.USER_ID
+                INNER JOIN PER_ROLE_MENU PRM
+                  ON PRU.ROLE_ID = PRM.ROLE_ID
+                INNER JOIN KPI_SET KS
+                  ON KS.KPI_SET_ID = PRM.MENU_ID
+            WHERE PU.USER_NAME = #USER_NAME#
+            ORDER BY
+                KPI_SET_SEQ
+                ]]>
+    </select>
+
+    <select id="getKpiGroups" resultClass="UpperCaseMap">
+        <![CDATA[
+            SELECT 
+                S.KPI_SET_ID,
+                G.KPI_GROUP_ID,
+                G.KPI_GROUP_NAME,
+                G.CHART_STYLE_ID,
+                G.TIP
+            FROM 
+                KPI_SET S
+            JOIN
+                KPI_SET_AND_KPI_GROUP_RELA R
+                ON
+                S.KPI_SET_ID = R.KPI_SET_ID
+            JOIN
+                KPI_GROUP G
+                ON
+                R.KPI_GROUP_ID = G.KPI_GROUP_ID
+            ORDER BY
+                KPI_SET_ID, KPI_GROUP_ID
+        ]]>
+    </select>
+
+</sqlMap>

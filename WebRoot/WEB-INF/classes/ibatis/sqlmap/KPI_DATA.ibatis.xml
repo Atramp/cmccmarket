@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE sqlMap      
+    PUBLIC "-//config.ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="KPI_DATA">
+    
+    <select id="getKpiGroupData" resultClass="UpperCaseMap" parameterClass="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                V.KPI_ID,
+                V.DATA_DATE,
+                V.KPI_VALUE,
+                CONCAT(D.KPI_NAME,'(',U.UNIT_NAME,')') AS KPI_NAME,
+                D.UNIT_ID,
+                D.PRECISIONS_ID,
+               	T.CHART_TYPE_CODE,
+               	U.UNIT_MULTIPLE,
+               	U.UNIT_NAME,
+               	P.PRECISIONS_FORMAT,
+               	D.AXIS
+            FROM 
+                KPI_VALUE V
+            JOIN
+                KPI_GROUP_AND_KPI_RELA R
+                ON
+                V.KPI_ID = R.KPI_ID
+                AND R.KPI_GROUP_ID = #kpiGroupId#
+            JOIN
+                KPI_DEFINE D
+                ON
+                V.KPI_ID = D.KPI_ID
+                AND
+                D.VALID_FLAG = '1'
+            JOIN
+            	CHART_TYPE T
+            	ON
+            	D.CHART_TYPE_ID = T.CHART_TYPE_ID
+            JOIN
+            	UNIT U
+            	ON D.UNIT_ID = U.UNIT_ID
+            JOIN
+            	PRECISIONS P
+            	ON P.PRECISIONS_ID = D.PRECISIONS_ID
+            WHERE
+                V.BRANCH_ID = #branchId#
+                AND
+                V.DATA_DATE >= $startDate$
+                AND
+                V.DATA_DATE <= $endDate$
+            ORDER BY
+                V.DATA_DATE, V.KPI_ID
+        ]]>
+    </select>
+    
+    <select id="getKpiGroupInfo" resultClass="UpperCaseMap">
+        <![CDATA[
+            SELECT 
+                G.KPI_GROUP_ID,
+                G.KPI_GROUP_NAME,
+                G.CHART_STYLE_ID,
+                S.CHART_STYLE_NAME,
+                S.FLASH_FILE,
+                S.XML_TEMPLATE
+            FROM 
+                KPI_GROUP G
+            JOIN
+                CHART_STYLE S
+                ON
+                G.CHART_STYLE_ID = S.CHART_STYLE_ID
+            ORDER BY
+               G.KPI_GROUP_ID
+        ]]>
+    </select>
+    
+    <select id="getKpiDataByKpiIdBranchIdDate" resultClass="UpperCaseMap">
+        <![CDATA[
+            SELECT
+				V.KPI_ID,
+				V.DATA_DATE,
+				V.KPI_VALUE,
+				V.BRANCH_ID,
+				B.BRANCH_NAME,
+				D.KPI_NAME,
+				D.UNIT_ID,
+				D.PRECISIONS_ID,
+				T.CHART_TYPE_CODE,
+				U.UNIT_MULTIPLE,
+               	U.UNIT_NAME,
+               	P.PRECISIONS_FORMAT,
+				D.AXIS
+			FROM
+				KPI_VALUE V
+			JOIN KPI_GROUP_AND_KPI_RELA R ON V.KPI_ID = R.KPI_ID
+			AND R.KPI_GROUP_ID = #KPI_GROUP_ID#
+			JOIN KPI_DEFINE D ON V.KPI_ID = D.KPI_ID
+			AND D.VALID_FLAG = '1'
+			JOIN CHART_TYPE T ON D.CHART_TYPE_ID = T.CHART_TYPE_ID
+			JOIN UNIT U ON D.UNIT_ID = U.UNIT_ID
+			JOIN PRECISIONS P ON P.PRECISIONS_ID = D.PRECISIONS_ID
+			JOIN (
+				SELECT
+					BRANCH_ID,
+					BRANCH_NAME
+				FROM
+					(
+						SELECT
+							IFNULL(B_ID3, IFNULL(B_ID2, B_ID1)) AS BRANCH_ID,
+							IFNULL(B_NAME3, IFNULL(B_NAME2, B_NAME1)) AS BRANCH_NAME
+						FROM
+							(
+								SELECT
+									B1.BRANCH_ID AS B_ID1,
+									B1.BRANCH_NAME AS B_NAME1,
+									B2.BRANCH_ID AS B_ID2,
+									B2.BRANCH_NAME AS B_NAME2,
+									B3.BRANCH_ID AS B_ID3,
+									B3.BRANCH_NAME AS B_NAME3
+								FROM
+									BRANCH B1
+								LEFT JOIN BRANCH B2 ON B1.BRANCH_ID = B2.PAR_BRANCH_ID
+								LEFT JOIN BRANCH B3 ON B2.BRANCH_ID = B3.PAR_BRANCH_ID
+								WHERE
+									B1.BRANCH_ID = #BRANCH_ID#
+							) T
+					) X
+				WHERE
+					X.BRANCH_ID <> #BRANCH_ID#
+				UNION
+					SELECT
+						BRANCH_ID,
+						BRANCH_NAME
+					FROM
+						BRANCH
+					WHERE
+						BRANCH_ID = #BRANCH_ID# AND 1=$INCLUDEFLAG$
+			) B ON B.BRANCH_ID = V.BRANCH_ID
+			WHERE
+				V.DATA_DATE = $DATA_DATE$
+			ORDER BY
+				V.BRANCH_ID
+        ]]>
+    </select>
+	<select id="getAllKpis" resultClass="UpperCaseMap" parameterClass="java.util.HashMap">
+		<![CDATA[
+		   SELECT
+				B.BRANCH_NAME,
+				B.BRANCH_SEQ,
+				B.PAR_BRANCH_ID,
+				D.KPI_NAME,
+				D.DISPLAY_ORDER,
+				V.KPI_VALUE,
+				V.KPI_RANK,
+				V.KPI_GROUP_RANK,
+				U.UNIT_MULTIPLE,
+				U.UNIT_NAME,
+				P.PRECISIONS_FORMAT
+			FROM
+				KPI_DEFINE D
+			INNER JOIN KPI_VALUE V ON V.KPI_ID = D.KPI_ID 
+			INNER JOIN (
+				SELECT
+					BRANCH_ID,
+					BRANCH_NAME,
+					BRANCH_SEQ,
+					PAR_BRANCH_ID
+				FROM
+					BRANCH
+				WHERE
+					BRANCH_TYPE = 'P'
+			) B ON V.BRANCH_ID = B.BRANCH_ID
+			INNER JOIN UNIT U ON U.UNIT_ID = D.UNIT_ID
+			INNER JOIN PRECISIONS P ON P.PRECISIONS_ID = D.PRECISIONS_ID
+			WHERE
+				D.MARKET_FLAG = '1'
+			AND V.DATA_DATE = #DATA_DATE#
+			ORDER BY 
+				BRANCH_SEQ, 
+				DISPLAY_ORDER
+		]]>
+	</select>
+	<select id="getAllKpis2" resultClass="UpperCaseMap" parameterClass="java.util.HashMap">
+		<![CDATA[
+		SELECT          
+				V.DATA_DATE,
+				B.BRANCH_NAME,
+				D.KPI_NAME,
+				V.KPI_VALUE,
+				V.KPI_RANK,
+				V.KPI_GROUP_RANK,
+				U.UNIT_NAME,
+				PRECISIONS_FORMAT,
+				UNIT_MULTIPLE,
+				D.KPI_ID,
+				B.BRANCH_SEQ
+			FROM
+				KPI_DEFINE D
+			LEFT JOIN KPI_VALUE V ON V.KPI_ID = D.KPI_ID
+			INNER JOIN (
+				SELECT
+					BRANCH_ID,
+					BRANCH_NAME,
+					BRANCH_SEQ,
+					PAR_BRANCH_ID
+				FROM
+					BRANCH
+				WHERE
+					BRANCH_TYPE = 'P'
+			) B ON V.BRANCH_ID = B.BRANCH_ID
+			INNER JOIN UNIT U ON U.UNIT_ID = D.UNIT_ID
+			INNER JOIN PRECISIONS P ON P.PRECISIONS_ID = D.PRECISIONS_ID
+			WHERE
+				 D.MARKET_FLAG = '1'
+			AND  V.DATA_DATE BETWEEN #START_DATE# and #END_DATE#
+		    AND  B.BRANCH_ID in ($BRANCH_ID$)
+		    AND  D.KPI_ID in($KPI_ID$)
+			ORDER BY 
+				V.DATA_DATE,BRANCH_SEQ, 
+				DISPLAY_ORDER
+		]]>
+	</select>
+    <select id="getMarketingResourceByRPID" resultClass="UpperCaseMap" parameterClass="java.util.HashMap">
+        <![CDATA[
+           SELECT
+                M.ID,
+                M.KPI_NAME,
+                M.DATA_DATE,
+                M.KPI_VALUE,
+                U.UNIT_MULTIPLE,
+                U.UNIT_NAME,
+                P.PRECISIONS_FORMAT
+             FROM
+                MKT_RP M
+        INNER JOIN UNIT U ON U.UNIT_ID = M.UNIT_ID
+        INNER JOIN PRECISIONS P ON P.PRECISIONS_ID = M.PRECISIONS_ID
+            WHERE RP_ID = #RP_ID#
+              AND M.CHART_TYPE IS NULL
+            ORDER BY M.DISPLAY_ID, M.DATA_DATE;
+        ]]>
+    </select>
+
+    <select id="getMarketingResourceChartByRPID" resultClass="UpperCaseMap" parameterClass="java.util.HashMap">
+        <![CDATA[
+           SELECT
+                M.ID,
+                M.KPI_NAME,
+                M.DATA_DATE,
+                M.KPI_VALUE,
+                U.UNIT_MULTIPLE,
+                U.UNIT_NAME,
+                P.PRECISIONS_FORMAT
+             FROM
+                MKT_RP M
+        INNER JOIN UNIT U ON U.UNIT_ID = M.UNIT_ID
+        INNER JOIN PRECISIONS P ON P.PRECISIONS_ID = M.PRECISIONS_ID
+            WHERE RP_ID = #RP_ID#
+              AND M.CHART_TYPE IS NOT NULL
+            ORDER BY M.DISPLAY_ID, M.DATA_DATE;
+        ]]>
+    </select>
+
+</sqlMap>

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE sqlMap
+        PUBLIC "-//config.ibatis.apache.org//DTD SQL Map 2.0//EN"
+        "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="ANALYSIS">
+    <select id="getMarketAnalysisKpiSet" resultClass="UpperCaseMap">
+        <![CDATA[
+
+            SELECT
+                KPI_SET_ID,
+                KPI_SET_NAME
+              FROM
+                KPI_SET_MKT_ANALYSIS
+          ORDER BY
+                KPI_SET_SEQ;
+
+        ]]>
+    </select>
+    <select id="getMarketAnalysisKpiGroup" resultClass="UpperCaseMap">
+        <![CDATA[
+
+            SELECT
+                KPI_GROUP_ID,
+                KPI_GROUP_NAME,
+                CHART_STYLE_ID,
+                CHART_DATA_CODE
+              FROM
+                KPI_GROUP_MKT_ANALYSIS
+          ORDER BY
+                KPI_GROUP_ORDER;
+
+        ]]>
+    </select>
+    <select id="getMarketAnalysisKpiGroupBySet" resultClass="UpperCaseMap">
+        <![CDATA[
+
+            SELECT
+                G.KPI_GROUP_ID,
+                G.KPI_GROUP_NAME,
+                G.CHART_DATA_CODE,
+                G.DATA_SOURCE,
+                C.XML_TEMPLATE,
+                C.FLASH_FILE
+              FROM
+                KPI_GROUP_MKT_ANALYSIS G
+        INNER JOIN CHART_STYLE C ON G.CHART_STYLE_ID = C.CHART_STYLE_ID
+             WHERE
+                G.KPI_SET_ID = #KPI_SET_ID#
+          ORDER BY
+                G.KPI_GROUP_ORDER;
+
+        ]]>
+    </select>
+    <select id="getMarkeyAnalysisKpisByGroup" resultClass="UpperCaseMap">
+        <![CDATA[
+
+            SELECT
+                V.KPI_ID,
+                V.KPI_NAME,
+                V.KPI_DESC,
+                V.CHART_TYPE_ID,
+                V.AXIS,
+                V.UNIT_NAME,
+                V.UNIT_MULTIPLE,
+                V.UNIT_TYPE,
+                V.PRECISIONS_FORMAT
+              FROM
+                V_KPI_DEFINE_MKT_ANALYSIS V
+        INNER JOIN
+                KPI_GROUP_AND_KPI_RELA R
+              ON
+                V.KPI_ID = R.KPI_ID
+             WHERE
+                R.KPI_GROUP_ID = #KPI_GROUP_ID#
+          ORDER BY V.DISPLAY_ORDER
+
+        ]]>
+    </select>
+    <select id="getMarketAnalysisKpiValueByBranchMonth" resultClass="UpperCaseMap">
+        <![CDATA[
+
+            SELECT
+                D.KPI_ID,
+                V.DATA_DATE,
+                V.BRANCH_ID,
+                V.KPI_VALUE,
+                V.KPI_RANK,
+                V.KPI_GROUP_RANK,
+                D.UNIT_NAME,
+                D.UNIT_MULTIPLE,
+                D.UNIT_TYPE,
+                D.PRECISIONS_FORMAT
+              FROM
+                V_KPI_DEFINE_MKT_ANALYSIS D
+        LEFT JOIN KPI_VALUE V ON V.KPI_ID = D.KPI_ID AND V.BRANCH_ID = #BRANCH_ID# AND V.DATA_DATE = #DATA_DATE#
+             WHERE D.KPI_ID = #KPI_ID#
+
+        ]]>
+    </select>
+
+    <select id="getChartData_1" resultClass="UpperCaseMap">
+        <![CDATA[
+
+            SELECT
+              R.KPI_GROUP_ID,
+              D.KPI_ID,
+              D.KPI_NAME,
+              D.AXIS,
+              D.UNIT_NAME,
+              D.UNIT_MULTIPLE,
+              D.UNIT_TYPE,
+              D.PRECISIONS_FORMAT,
+              T.CHART_TYPE_CODE,
+              V.KPI_VALUE,
+              V.BRANCH_ID,
+              V.DATA_DATE
+            FROM KPI_GROUP_AND_KPI_RELA R
+              INNER JOIN V_KPI_DEFINE_MKT_ANALYSIS D ON R.KPI_ID = D.KPI_ID
+              INNER JOIN CHART_TYPE T ON T.CHART_TYPE_ID = D.CHART_TYPE_ID
+              LEFT JOIN KPI_VALUE V ON V.KPI_ID = D.KPI_ID AND V.BRANCH_ID IN ($BRANCH_ID$) AND V.DATA_DATE IN ($DATA_DATE$)
+            WHERE R.KPI_GROUP_ID = #KPI_GROUP_ID#
+            ORDER BY D.DISPLAY_ORDER, V.DATA_DATE;
+
+        ]]>
+    </select>
+    <select id="getChartData_2" resultClass="UpperCaseMap">
+        <![CDATA[
+
+            SELECT
+              R.KPI_GROUP_ID,
+              D.KPI_ID,
+              D.KPI_NAME,
+              D.AXIS,
+              D.UNIT_NAME,
+              D.UNIT_MULTIPLE,
+              D.UNIT_TYPE,
+              D.PRECISIONS_FORMAT,
+              T.CHART_TYPE_CODE,
+              V.KPI_VALUE,
+              V.BRANCH_ID
+            FROM KPI_GROUP_AND_KPI_RELA R
+              INNER JOIN V_KPI_DEFINE_MKT_ANALYSIS D ON R.KPI_ID = D.KPI_ID
+              INNER JOIN CHART_TYPE T ON T.CHART_TYPE_ID = D.CHART_TYPE_ID
+              LEFT JOIN KPI_VALUE V ON V.KPI_ID = D.KPI_ID
+              LEFT JOIN BRANCH B ON V.BRANCH_ID = B.BRANCH_ID
+            WHERE R.KPI_GROUP_ID = #KPI_GROUP_ID# AND V.BRANCH_ID IN ($BRANCH_ID$) AND V.DATA_DATE = #DATA_DATE#
+            ORDER BY D.DISPLAY_ORDER, B.BRANCH_SEQ, V.DATA_DATE;
+
+        ]]>
+    </select>
+    <select id="getChartData_3" resultClass="java.util.LinkedHashMap">
+        <![CDATA[
+
+            SELECT
+              A.BRANCH_ID,
+              A.STRM_1_RT,
+              A.STRM_10_RT,
+              A.STRM_30_RT,
+              A.STRM_50_RT,
+              A.STRM_100_RT,
+              A.STRM_150_RT,
+              A.STRM_200_RT,
+              A.STRM_500_RT,
+              A.STRM_1000_RT,
+              A.STRM_1000_UP_RT
+            FROM
+              RP_GPRS_STRM_LVL_MON A
+            WHERE
+              STATIS_MON = #DATA_DATE#
+            AND
+              BRANCH_ID IN ($BRANCH_ID$);
+
+        ]]>
+    </select>
+    <select id="getChartData_4" resultClass="java.util.LinkedHashMap">
+
+        SELECT
+          D.KPI_ID,
+          D.KPI_NAME,
+          D.AXIS,
+          D.UNIT_NAME,
+          D.UNIT_MULTIPLE,
+          D.UNIT_TYPE,
+          D.PRECISIONS_FORMAT,
+          T.CHART_TYPE_CODE,
+          V.KPI_VALUE,
+          V.BRANCH_ID,
+          V.DATA_DATE
+        FROM
+          KPI_VALUE V
+        INNER JOIN V_KPI_DEFINE_MKT_ANALYSIS D ON V.KPI_ID = D.KPI_ID
+        INNER JOIN CHART_TYPE T ON T.CHART_TYPE_ID = D.CHART_TYPE_ID
+        WHERE V.KPI_ID = #KPI_ID#
+          AND V.BRANCH_ID = #BRANCH_ID#
+          AND V.DATA_DATE BETWEEN '201402' AND #DATA_DATE#
+        ORDER BY DATA_DATE
+    </select>
+</sqlMap>

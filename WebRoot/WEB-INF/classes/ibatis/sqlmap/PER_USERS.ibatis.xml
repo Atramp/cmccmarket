@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//config.ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd" >
+<sqlMap namespace="PER_USERS">
+
+	
+	<resultMap id="perUsers" class="com.teradata.permission.bean.PerUsers" >
+		<result column="USER_ID" property="USER_ID" jdbcType="VARCHAR" />
+		<result column="USER_NAME" property="USER_NAME" jdbcType="VARCHAR" />
+		<result column="USER_REAL_NAME" property="USER_REAL_NAME" jdbcType="VARCHAR" />		
+		<result column="USER_STATUS" property="USER_STATUS" jdbcType="VARCHAR" />	
+		<result column="USER_PWD" property="USER_PWD" jdbcType="VARCHAR" />	
+		<result column="USER_ROLE_GROUP" property="USER_ROLE_GROUP" jdbcType="VARCHAR" />	
+		<result column="USER_BRANCH_GROUP" property="USER_BRANCH_GROUP" jdbcType="CHAR" />
+		<result column="USER_DEPT_GROUP" property="USER_DEPT_GROUP" jdbcType="VARCHAR" />
+		<result column="USER_SEQ" property="USER_SEQ" jdbcType="VARCHAR" />
+		<result column="USER_MID_DATE" property="USER_MID_DATE" jdbcType="VARCHAR" />
+	</resultMap>
+
+  
+  <select id="geUsers" resultClass="UpperCaseMap">
+        <![CDATA[
+            SELECT
+               USER_ID,USER_NAME,USER_REAL_NAME,USER_STATUS,USER_PWD,USER_ROLE_GROUP,USER_DATA_GROUP,USER_BRANCH_GROUP,USER_DEPT_GROUP,USER_SEQ,USER_MID_DATE
+            FROM
+                PER_USERS
+            ORDER BY
+                USER_SEQ
+        ]]>
+    </select>
+      <select id="geUserByLogin" resultClass="UpperCaseMap">
+        <![CDATA[
+            SELECT
+               USER_ID,USER_NAME,USER_REAL_NAME,USER_STATUS,USER_PWD,USER_ROLE_GROUP,USER_DATA_GROUP,USER_BRANCH_GROUP,USER_DEPT_GROUP,USER_SEQ,USER_MID_DATE
+            FROM
+                PER_USERS  WHERE  USER_NAME=#USER_NAME# AND USER_PWD=#USER_PWD#
+            ORDER BY
+                USER_SEQ
+        ]]>
+    </select>
+    
+    <select id="getUserByUserId" resultClass="UpperCaseMap" parameterClass="java.util.HashMap" >
+     <![CDATA[
+		 SELECT T1.* FROM (
+		SELECT USER_ID,USER_REAL_NAME,USER_NAME,USER_STATUS,USER_ROLE_GROUP,USER_DATA_GROUP,USER_BRANCH_GROUP,BRANCH.NAME AS USER_BRANCH_GROUP_NAME,USER_DEPT_GROUP,DEPT_NAME
+		FROM ( 
+		  SELECT USER_ID,USER_REAL_NAME,USER_NAME,USER_STATUS,USER_ROLE_GROUP,USER_DATA_GROUP,USER_BRANCH_GROUP,USER_DEPT_GROUP
+		 FROM PER_USERS WHERE USER_ID=$USER_ID$
+		 ) USERS 
+		 LEFT JOIN PER_BRANCH BRANCH ON USERS.USER_BRANCH_GROUP=BRANCH.CODE
+		 LEFT JOIN PER_DEPT DEPT ON DEPT.DEPT_CODE=USERS.USER_DEPT_GROUP
+		 
+		) T1 
+		ORDER BY T1.USER_REAL_NAME ASC
+        ]]>
+    
+    </select>
+    <select id="getUserByUserName" resultClass="UpperCaseMap" parameterClass="java.util.HashMap" >
+     <![CDATA[
+            SELECT
+               USER_ID,USER_NAME,USER_REAL_NAME,USER_STATUS,USER_PWD,USER_ROLE_GROUP,USER_DATA_GROUP,USER_BRANCH_GROUP,USER_DEPT_GROUP,USER_SEQ,USER_MID_DATE
+            FROM
+                PER_USERS
+            WHERE
+            	USER_NAME=#USER_NAME#
+        ]]>
+    
+    </select>
+    <insert id="add"  parameterClass="java.util.HashMap" >
+		INSERT INTO PER_USERS
+		(USER_NAME,USER_PWD,USER_REAL_NAME,USER_BRANCH_GROUP,USER_DEPT_GROUP) 
+		VALUES
+		(
+		  #USER_NAME#,#USER_PWD#,#USER_REAL_NAME#,#USER_BRANCH_GROUP#,#USER_DEPT_GROUP#
+		)
+		<selectKey resultClass="int" type="post" keyProperty="id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+   </insert>
+   
+   <delete  id="deleteUsersById" parameterClass="java.util.HashMap">
+   		DELETE FROM PER_USERS WHERE USER_ID IN($USER_ID$)
+   </delete>
+
+   <update  id="updateUsersStatus" parameterClass="java.util.HashMap">
+   		UPDATE PER_USERS SET USER_STATUS=#USER_STATUS# WHERE USER_ID IN($USER_ID$)
+   </update>
+   
+   <update  id="updateUserPwd" parameterClass="java.util.HashMap">
+   		UPDATE PER_USERS SET USER_PWD=#USER_PWD# WHERE USER_ID=#USER_ID#
+   </update>
+   
+   
+    <update  id="updateUser" parameterClass="java.util.HashMap">
+   		UPDATE PER_USERS SET USER_NAME=#USER_NAME#
+   		                    ,USER_REAL_NAME=#USER_REAL_NAME#
+   		                    ,USER_BRANCH_GROUP=#USER_BRANCH_GROUP#
+   							,USER_DEPT_GROUP=#USER_DEPT_GROUP#
+   							,USER_STATUS=#USER_STATUS# 
+   		WHERE USER_ID IN($USER_ID$)
+   </update> 
+  
+</sqlMap>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.1//EN"
+        "http://struts.apache.org/dtds/struts-2.1.dtd">
+
+<struts>
+
+    <include file="struts-default.xml"/>
+
+    <constant name="struts.custom.i18n.resources" value="globalMessages"/>
+    <constant name="struts.devMode" value="false"/>
+    <constant name="struts.configuration.xml.reload" value="true"/>
+    <constant name="struts.i18n.reload" value="true"/>
+
+    <package name="struts-td" abstract="true" extends="json-default">
+        <interceptors>
+            <interceptor name="exception" class="com.teradata.adf.web.exception.ADFErrorMessageInterceptor"/>
+            <interceptor-stack name="tdStack">
+                <interceptor-ref name="exception"/>
+                <interceptor-ref name="defaultStack"/>
+            </interceptor-stack>
+        </interceptors>
+
+        <default-interceptor-ref name="tdStack"/>
+
+        <global-results>
+            <result name="ajaxErrorPage">/adf/common/error/ajaxErrorPage.jsp</result>
+            <result name="exception">/adf/common/error/exception.jsp</result>
+        </global-results>
+
+        <global-exception-mappings>
+            <exception-mapping result="exception" exception="java.lang.Exception"/>
+        </global-exception-mappings>
+
+    </package>
+
+    <include file="struts2/market.struts.xml"></include>
+
+    <include file="struts2/permission.struts.xml"></include>
+
+
+</struts>

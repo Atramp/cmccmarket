@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<decorators defaultdir="/adf/common/decorators">
+	<excludes>
+    </excludes>
+
+    <decorator name="ext" page="ext.jsp">
+        <pattern>*.jsp</pattern>
+        <pattern>*.do</pattern>
+        <pattern>*.action</pattern>
+    </decorator>
+
+</decorators>
