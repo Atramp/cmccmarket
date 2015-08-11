@@ -10,5 +10,5 @@
 
 target
 
-src/test
+WebRoot/WEB-INF/classes
 WebRoot/jsp/marketing-analysis/admin/charts/
