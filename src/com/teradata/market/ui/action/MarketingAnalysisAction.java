@@ -8,6 +8,7 @@ import com.teradata.market.ui.chart.CategoryChart;
 import com.teradata.market.ui.chart.ChartObject;
 import com.teradata.market.ui.chart.fusionchart.FCCategoryChartProducer;
 import com.teradata.market.util.DateUtil;
+import com.teradata.market.util.FreemarkerUtil;
 import com.teradata.permission.bean.PerUsers;
 import com.teradata.permission.util.GlobalConstants;
 import freemarker.template.Configuration;
@@ -289,27 +290,24 @@ public class MarketingAnalysisAction extends CommonAction {
         chart.setShowYAxisLine(ChartObject.SWITCH.TRUE.value());
         switch (MapUtils.getIntValue(kpiGroup, "CHART_DATA_CODE")) {
             case 1: {            // 单省+全国 多年跨度
-                String categories[] = new String[5];
                 String dates[] = new String[5];
-                Map<String, Integer> catIndex = new HashMap();
                 for (int i = 0; i < 5; i++) {
-                    categories[i] = String.valueOf(Integer.valueOf(year) - 4 + i);
-                    dates[i] = categories[i] + month;
-                    catIndex.put(dates[i], i);
+                    dates[i] = String.valueOf(Integer.valueOf(year) - 4 + i) + month;
                 }
-                chart.setCategoryNames(categories);
                 chart.setSerieNames(new String[]{branchName, "全国"});
                 List<Map> data = service.getChartData_1(kpiGroupId, branchId, dates);
-                String[] data0 = new String[5];
-                String[] data1 = new String[5];
-                Arrays.fill(data0, "");
-                Arrays.fill(data1, "");
                 if (data != null && data.size() > 0) {
+                    String[] data0 = new String[5];
+                    String[] data1 = new String[5];
+                    Arrays.fill(data0, "");
+                    Arrays.fill(data1, "");
+                    Set<String> categories = new LinkedHashSet();
                     for (Map row : data) {
+                        categories.add(MapUtils.getString(row, "DATA_DATE"));
                         if ("13500".equals(MapUtils.getString(row, "BRANCH_ID")))
-                            data1[catIndex.get(MapUtils.getString(row, "DATA_DATE"))] = formatKpiValue(row);
+                            data1[categories.size() - 1] = formatKpiValue(row);
                         else
-                            data0[catIndex.get(MapUtils.getString(row, "DATA_DATE"))] = formatKpiValue(row);
+                            data0[categories.size() - 1] = formatKpiValue(row);
                     }
                     chart.setDatas(new String[][]{data0, data1});
                     StringBuilder caption = new StringBuilder();
@@ -319,6 +317,7 @@ public class MarketingAnalysisAction extends CommonAction {
                         caption.append("(").append(unitName).append(")");
                     caption.append("（").append("1-").append(_month).append("月").append("）");
                     chart.setCaption(caption.toString());
+                    chart.setCategoryNames(categories.toArray(new String[categories.size()]));
                 }
                 break;
             }
@@ -384,7 +383,7 @@ public class MarketingAnalysisAction extends CommonAction {
                 }
                 chart.setDatas(new String[][]{data0, data1});
                 StringBuilder caption = new StringBuilder();
-                caption.append(MapUtils.getString(kpiGroup, "KPI_GROUP_NAME")).append("（").append(year).append("年1-").append(_month).append("月").append("）");
+                caption.append(MapUtils.getString(kpiGroup, "KPI_GROUP_NAME")).append("(%)（").append(year).append("年1-").append(_month).append("月").append("）");
                 chart.setCaption(caption.toString());
                 break;
             }
@@ -449,47 +448,54 @@ public class MarketingAnalysisAction extends CommonAction {
                 Map currentValue = service.getMarketAnalysisKpiValueByBranchMonth(kpi.get("KPI_ID").toString(), branchId, date);
                 Map lastYearValue = service.getMarketAnalysisKpiValueByBranchMonth(kpi.get("KPI_ID").toString(), branchId, getMonthLastYear(date));
                 // 生成text
+                String multiple = MapUtils.getString(currentValue, "UNIT_MULTIPLE");
+                String format = MapUtils.getString(currentValue, "PRECISIONS_FORMAT");
+
                 String unit = MapUtils.getString(currentValue, "UNIT_NAME");
-                String unitX = "%".equals(unit) ? "PP" : unit;
+                String unitX = "%".equals(unit) ? "pp" : unit;
 
                 String kpiValue = formatKpiValue(currentValue);
                 String kpiValue_lastYear = formatKpiValue(lastYearValue);
 
+                String kpiRank = MapUtils.getString(currentValue, "KPI_RANK");
+                String kpiRank_lastYear = MapUtils.getString(lastYearValue, "KPI_RANK");
+
+                String kpiGroupRank = MapUtils.getString(currentValue, "KPI_GROUP_RANK");
+                String kpiGroupRank_lastYear = MapUtils.getString(lastYearValue, "KPI_GROUP_RANK");
+
+                Map variable = new HashMap();
+                variable.put("KPI_NAME",MapUtils.getString(kpi,"KPI_NAME"));
+                variable.put("UNIT", unit);
+                variable.put("UNITX", unitX);
+                variable.put("KPI_VALUE", kpiValue);
+                variable.put("KPI_VALUE_LAST_YEAR", kpiValue_lastYear);
+                variable.put("KPI_VALUE_VARIETY", minus(kpiValue, kpiValue_lastYear, multiple, format));
+                variable.put("KPI_RANK", kpiRank);
+                variable.put("KPI_RANK_LAST_YEAR", kpiRank_lastYear);
+                variable.put("KPI_GROUP_RANK", kpiGroupRank);
+                variable.put("KPI_GROUP_RANK_LAST_YEAR", kpiGroupRank_lastYear);
+                variable.put("KPI_RANK_VARIETY", minus(kpiRank, kpiRank_lastYear, null, null));
+                variable.put("KPI_GROUP_RANK_VARIETY", minus(kpiGroupRank, kpiGroupRank_lastYear, null, null));
+
                 //年累计收入份额:移动55.35%（去年同期55.33%，变化0.02pp），全国排名第15位（去年同期第20位），组内排名第1位（去年同期第2位）。
-                String text = new StringBuilder(MapUtils.getString(kpi, "KPI_NAME"))
-                        .append(kpiValue)
-                        .append(unit)
-                        .append("（去年同期")
-                        .append(kpiValue_lastYear)
-                        .append(unit)
-                        .append("，变化")
-                        .append(minus(currentValue, lastYearValue))
-                        .append(unitX)
-                        .append("），全国排名第")
-                        .append(MapUtils.getString(currentValue, "KPI_RANK", "-"))
-                        .append("位（去年同期第")
-                        .append(MapUtils.getString(lastYearValue, "KPI_RANK", "-"))
-                        .append("位），组内排名第")
-                        .append(MapUtils.getString(currentValue, "KPI_GROUP_RANK", "-"))
-                        .append("位（去年同期第")
-                        .append(MapUtils.getString(lastYearValue, "KPI_GROUP_RANK", "-"))
-                        .append("位）。\n")
-                        .toString();
+                String text_template = MapUtils.getString(kpi, "TEXT_TEMPLATE");
+                String text = FreemarkerUtil.stringReplace(text_template, variable);
                 kpi.put("TEXT", text);
             }
         }
         return kpis;
     }
 
-    private String minus(Map kpiValue, Map kpiValue_lastYear) {
-        String value = MapUtils.getString(kpiValue, "KPI_VALUE", "");
-        String value_lastYear = MapUtils.getString(kpiValue_lastYear, "KPI_VALUE", "");
-        if (value.isEmpty() || value_lastYear.isEmpty())
+    private String minus(String value1, String value2, String multiple, String format) {
+        if (value1.isEmpty() || value2.isEmpty())
             return "-";
-        BigDecimal result = new BigDecimal(value).subtract(new BigDecimal(value_lastYear));
-        result = result.divide(new BigDecimal(MapUtils.getString(kpiValue, "UNIT_MULTIPLE", "")));
-        DecimalFormat format = new DecimalFormat(MapUtils.getString(kpiValue, "PRECISIONS_FORMAT", ""));
-        return format.format(result);
+        BigDecimal result = new BigDecimal(value1).subtract(new BigDecimal(value2));
+        if (multiple != null && !multiple.isEmpty())
+            result = result.divide(new BigDecimal(multiple));
+        if (format != null && !format.isEmpty()) {
+            return new DecimalFormat(format).format(result);
+        }
+        return result.toString();
     }
 
     // 根据配置格式化KPI值

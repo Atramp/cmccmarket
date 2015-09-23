@@ -65,13 +65,12 @@
                 V.UNIT_NAME,
                 V.UNIT_MULTIPLE,
                 V.UNIT_TYPE,
-                V.PRECISIONS_FORMAT
+                V.PRECISIONS_FORMAT,
+                T.TEXT_TEMPLATE
               FROM
                 V_KPI_DEFINE_MKT_ANALYSIS V
-        INNER JOIN
-                KPI_GROUP_AND_KPI_RELA R
-              ON
-                V.KPI_ID = R.KPI_ID
+        INNER JOIN KPI_GROUP_AND_KPI_RELA R ON V.KPI_ID = R.KPI_ID
+        INNER JOIN MARKET_ANALYSIS_TEXT T ON V.TEXT_TEMPLATE = T.ID
              WHERE
                 R.KPI_GROUP_ID = #KPI_GROUP_ID#
           ORDER BY V.DISPLAY_ORDER
