@@ -14,7 +14,7 @@ public class FreemarkerUtil {
     private static StringTemplateLoader stl;
 
     static {
-        cfg = new Configuration();
+        cfg = new Configuration(Configuration.VERSION_2_3_0);
         stl = new StringTemplateLoader();
         cfg.setTemplateLoader(stl);
     }

@@ -49,7 +49,7 @@
                   ELSE
                     CONCAT(
                         KS.KPI_SET_URL,
-                        '?kpiSetId=',
+                        '&kpiSetId=',
                         KS.KPI_SET_ID,
                         '&download=',
                         PRM.MENU_DOWNLOAD

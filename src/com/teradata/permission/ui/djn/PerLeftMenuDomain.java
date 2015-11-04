@@ -80,12 +80,16 @@ public class PerLeftMenuDomain {
         item.setText((String) data.get("KPI_SET_NAME"));
         String url = (String) data.get("KPI_SET_URL");
         if (StringUtils.isNotEmpty(url)) {
-            item.setUrl(new StringBuilder(url)
-                    .append("?")
-                    .append("kpiSetId=").append(data.get("KPI_SET_ID"))
+            StringBuilder newUrl = new StringBuilder(url);
+            if (url.contains("?")) {
+                newUrl.append("&");
+            } else {
+                newUrl.append("?");
+            }
+            newUrl.append("kpiSetId=").append(data.get("KPI_SET_ID"))
                     .append("&")
-                    .append("download=").append(data.get("DOWNLOAD"))
-                    .toString());
+                    .append("download=").append(data.get("DOWNLOAD"));
+            item.setUrl(newUrl.toString());
         }
 
         return item;

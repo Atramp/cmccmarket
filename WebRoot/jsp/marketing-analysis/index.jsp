@@ -131,11 +131,12 @@
                         <%}%>
                     ]
                 });
-                setTimeout(function(){
+                setTimeout(function () {
                     $(chartDataArray).each(function () {
-                        drawChart(this.id, this.chartData, this.type, this.width);
+                        if (this.chartData != null)
+                            drawChart(this.id, this.chartData, this.type, this.width);
                     });
-                },1);
+                }, 1);
             });
         });
         var chartDataArray = new Array();
@@ -170,7 +171,7 @@
         }
 
         /**
-         * 导出excel
+         * 导出DOC
          */
         function saveDoc() {
             var mask = new Ext.LoadMask(
@@ -255,12 +256,15 @@
             </tr>
             <%
                 List<Map> kpiGroupList = (List) kpiSet.get("KPI_GROUPS");
+                int index = 1;
                 for (int index_group = 0; index_group < kpiGroupList.size(); index_group++) {
                     Map kpiGroup = kpiGroupList.get(index_group);
+                    if (((List) MapUtils.getObject(kpiGroup, "KPIS")).isEmpty() && MapUtils.getString(kpiGroup, "CHART_DATA", "").isEmpty())
+                        continue;
             %>
             <tr>
                 <td colspan="2"><span
-                        class="title"><%=index_group + 1%>、<%=MapUtils.getString(kpiGroup, "KPI_GROUP_NAME")%></span>
+                        class="title"><%=index++%>、<%=MapUtils.getString(kpiGroup, "KPI_GROUP_NAME", "")%></span>
                 </td>
             </tr>
             <tr>
@@ -274,7 +278,7 @@
                         for (Map kpi : kpiList) {
                     %>
                     <p style="line-height: 2.5em;margin: 0;">
-                        <%=MapUtils.getString(kpi, "TEXT")%>
+                        <%=MapUtils.getString(kpi, "TEXT", "")%>
                     </p>
                     <%
                         }

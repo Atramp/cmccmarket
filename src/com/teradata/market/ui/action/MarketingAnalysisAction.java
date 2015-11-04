@@ -24,6 +24,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.docx4j.XmlUtils;
 import org.docx4j.dml.wordprocessingDrawing.Inline;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
@@ -36,6 +37,9 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by alex on 15-3-18.
@@ -50,9 +54,9 @@ public class MarketingAnalysisAction extends CommonAction {
     private Configuration cfg = null;
 
     {
-        cfg = new Configuration();
+        cfg = new Configuration(Configuration.VERSION_2_3_0);
         cfg.setServletContextForTemplateLoading(this.getServletContext(), "WEB-INF/classes/template/");
-        cfg.setObjectWrapper(new DefaultObjectWrapper());
+        cfg.setObjectWrapper(new DefaultObjectWrapper(Configuration.VERSION_2_3_0));
     }
 
     /**
@@ -65,11 +69,25 @@ public class MarketingAnalysisAction extends CommonAction {
         if (date == null || branchId == null)
             return SUCCESS;
         List<Map> kpiSetList = service.getMarketAnalysisKpiSet();
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
         for (Map kpiSet : kpiSetList) {
             List<Map> kpiGroupList = service.getMarketAnalysisKpiGroupBySet(kpiSet);
             kpiSet.put("KPI_GROUPS", kpiGroupList);
-            for (Map kpiGroup : kpiGroupList)
-                processGroupData(kpiGroup);
+            for (final Map kpiGroup : kpiGroupList) {
+                executorService.execute(new Runnable() {
+                    public void run() {
+                        processGroupData(kpiGroup);
+                    }
+                });
+            }
+        }
+        try {
+            executorService.shutdown();
+            while (!executorService.awaitTermination(100, TimeUnit.MILLISECONDS)) {
+                Logger.getLogger(this.getClass()).debug("处理未完成");
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         this.datas = kpiSetList;
         getSession().setAttribute("datas", this.datas);
@@ -94,7 +112,6 @@ public class MarketingAnalysisAction extends CommonAction {
         transcoder.addTranscodingHint(JPEGTranscoder.KEY_QUALITY, 1.0F);
         transcoder.addTranscodingHint(JPEGTranscoder.KEY_WIDTH, 2 * Float.parseFloat(StringUtils.defaultString(width, "450")));
         transcoder.addTranscodingHint(JPEGTranscoder.KEY_HEIGHT, 600F);
-
         TranscoderInput input = new TranscoderInput(new CharSequenceReader(svg));
         OutputStream outputStream = null;
         try {
@@ -279,8 +296,8 @@ public class MarketingAnalysisAction extends CommonAction {
 
     private CategoryChart processChartData(Map kpiGroup, String... args) {
         String year = date.substring(0, 4);
-        String month = date.substring(4);
-        String _month = month.startsWith("0") ? month.substring(1) : month;
+        String _month = date.substring(4);
+        String month = _month.startsWith("0") ? _month.substring(1) : _month;
         String kpiGroupId = MapUtils.getString(kpiGroup, "KPI_GROUP_ID");
         CategoryChart chart = new CategoryChart(MapUtils.getIntValue(kpiGroup, "CHART_STYLE_ID"));
         chart.setShowYAxisValues(ChartObject.SWITCH.TRUE.value());
@@ -292,33 +309,36 @@ public class MarketingAnalysisAction extends CommonAction {
             case 1: {            // 单省+全国 多年跨度
                 String dates[] = new String[5];
                 for (int i = 0; i < 5; i++) {
-                    dates[i] = String.valueOf(Integer.valueOf(year) - 4 + i) + month;
+                    dates[i] = String.valueOf(Integer.valueOf(year) - 4 + i) + _month;
                 }
                 chart.setSerieNames(new String[]{branchName, "全国"});
                 List<Map> data = service.getChartData_1(kpiGroupId, branchId, dates);
-                if (data != null && data.size() > 0) {
-                    String[] data0 = new String[5];
-                    String[] data1 = new String[5];
-                    Arrays.fill(data0, "");
-                    Arrays.fill(data1, "");
-                    Set<String> categories = new LinkedHashSet();
-                    for (Map row : data) {
-                        categories.add(MapUtils.getString(row, "DATA_DATE"));
-                        if ("13500".equals(MapUtils.getString(row, "BRANCH_ID")))
-                            data1[categories.size() - 1] = formatKpiValue(row);
-                        else
-                            data0[categories.size() - 1] = formatKpiValue(row);
-                    }
-                    chart.setDatas(new String[][]{data0, data1});
-                    StringBuilder caption = new StringBuilder();
-                    String unitName = MapUtils.getString(data.get(0), "UNIT_NAME", "");
-                    caption.append(MapUtils.getString(kpiGroup, "KPI_GROUP_NAME"));
-                    if (!unitName.isEmpty())
-                        caption.append("(").append(unitName).append(")");
-                    caption.append("（").append("1-").append(_month).append("月").append("）");
-                    chart.setCaption(caption.toString());
-                    chart.setCategoryNames(categories.toArray(new String[categories.size()]));
+                if (data == null || data.isEmpty()) {
+                    chart = null;
+                    break;
                 }
+                String[] data0 = new String[5];
+                String[] data1 = new String[5];
+                Arrays.fill(data0, "");
+                Arrays.fill(data1, "");
+                Set<String> categories = new LinkedHashSet();
+                for (Map row : data) {
+                    categories.add(MapUtils.getString(row, "DATA_DATE"));
+                    if ("13500".equals(MapUtils.getString(row, "BRANCH_ID")))
+                        data1[categories.size() - 1] = formatKpiValue(row);
+                    else
+                        data0[categories.size() - 1] = formatKpiValue(row);
+                }
+                chart.setDatas(new String[][]{data0, data1});
+                StringBuilder caption = new StringBuilder();
+                String unitName = MapUtils.getString(data.get(0), "UNIT_NAME", "");
+                caption.append(MapUtils.getString(kpiGroup, "KPI_GROUP_NAME"));
+                if (!unitName.isEmpty())
+                    caption.append("(").append(unitName).append(")");
+                caption.append("（").append("1-").append(month).append("月").append("）");
+                chart.setCaption(caption.toString());
+                chart.setCategoryNames(categories.toArray(new String[categories.size()]));
+
                 break;
             }
             case 2:// 组内+全国 单月
@@ -332,6 +352,10 @@ public class MarketingAnalysisAction extends CommonAction {
                 }
                 chart.setCategoryNames(ArrayUtils.add(categories, "全国"));
                 List<Map> data = service.getChartData_2(kpiGroupId, date, ArrayUtils.add(branchIds, "13500"));
+                if (data == null || data.isEmpty()) {
+                    chart = null;
+                    break;
+                }
                 MultiValueMap multiValueMap = MultiValueMap.decorate(new LinkedHashMap());
                 Map<String, String> typeMap = new LinkedHashMap();
                 Map<String, String> axisMap = new LinkedHashMap();
@@ -355,7 +379,7 @@ public class MarketingAnalysisAction extends CommonAction {
                 }
                 chart.setDatas(datas);
                 StringBuilder caption = new StringBuilder();
-                caption.append(MapUtils.getString(kpiGroup, "KPI_GROUP_NAME")).append("（").append(year).append("年1-").append(_month).append("月").append("）");
+                caption.append(MapUtils.getString(kpiGroup, "KPI_GROUP_NAME")).append("（").append(year).append("年1-").append(month).append("月").append("）");
                 chart.setCaption(caption.toString());
                 break;
             }
@@ -364,6 +388,10 @@ public class MarketingAnalysisAction extends CommonAction {
                 chart.setCategoryNames(categories);
                 chart.setSerieNames(new String[]{branchName, "全国"});
                 List<LinkedHashMap> data = service.getChartData_3(new String[]{branchId, "13500"}, date);
+                if (data == null || data.isEmpty()) {
+                    chart = null;
+                    break;
+                }
                 String[] data0 = new String[10];
                 String[] data1 = new String[10];
                 for (int i = 0; i < data.size(); i++) {
@@ -383,13 +411,17 @@ public class MarketingAnalysisAction extends CommonAction {
                 }
                 chart.setDatas(new String[][]{data0, data1});
                 StringBuilder caption = new StringBuilder();
-                caption.append(MapUtils.getString(kpiGroup, "KPI_GROUP_NAME")).append("(%)（").append(year).append("年1-").append(_month).append("月").append("）");
+                caption.append(MapUtils.getString(kpiGroup, "KPI_GROUP_NAME")).append("(%)（").append(year).append("年1-").append(month).append("月").append("）");
                 chart.setCaption(caption.toString());
                 break;
             }
             case 4: {// 4G客户每月净增 201402至今 单省不加全国
                 chart.setSerieNames(new String[]{branchName});
                 List<LinkedHashMap> data = service.getChartData_4(MapUtils.getString((Map) ((List) kpiGroup.get("KPIS")).get(0), "KPI_ID"), branchId, date);
+                if (data == null || data.isEmpty()) {
+                    chart = null;
+                    break;
+                }
                 int size = data.size();
                 String[] data0 = new String[size];
                 String[] months = new String[size];
@@ -410,6 +442,10 @@ public class MarketingAnalysisAction extends CommonAction {
                 String branchIds[] = new String[]{branchId, "13500"};
                 chart.setCategoryNames(categories);
                 List<Map> data = service.getChartData_2(kpiGroupId, date, branchIds);
+                if (data == null || data.isEmpty()) {
+                    chart = null;
+                    break;
+                }
                 MultiValueMap multiValueMap = MultiValueMap.decorate(new LinkedHashMap());
                 Map<String, String> typeMap = new LinkedHashMap();
                 Map<String, String> axisMap = new LinkedHashMap();
@@ -433,7 +469,7 @@ public class MarketingAnalysisAction extends CommonAction {
                 }
                 chart.setDatas(datas);
                 StringBuilder caption = new StringBuilder();
-                caption.append(MapUtils.getString(kpiGroup, "KPI_GROUP_NAME")).append("（").append(year).append("年1-").append(_month).append("月").append("）");
+                caption.append(MapUtils.getString(kpiGroup, "KPI_GROUP_NAME")).append("（").append(year).append("年1-").append(month).append("月").append("）");
                 chart.setCaption(caption.toString());
                 break;
             }
@@ -443,9 +479,18 @@ public class MarketingAnalysisAction extends CommonAction {
 
     private List processGroupKpis(Map kpiGroup) {
         List<Map> kpis = service.getMarkeyAnalysisKpisByGroup(kpiGroup);
+        String year = date.substring(0, 4);
+        String _month = date.substring(4);
+        String month = _month.startsWith("0") ? _month.substring(1) : _month;
         if (kpis != null) {
-            for (Map kpi : kpis) {
+            for (int i = 0; i < kpis.size(); i++) {
+                Map kpi = kpis.get(i);
                 Map currentValue = service.getMarketAnalysisKpiValueByBranchMonth(kpi.get("KPI_ID").toString(), branchId, date);
+                if (currentValue == null || currentValue.isEmpty()) {
+                    kpis.remove(i--);
+                    continue;
+                }
+                Map currentNationValue = service.getMarketAnalysisKpiValueByBranchMonth(kpi.get("KPI_ID").toString(), "13500", date);
                 Map lastYearValue = service.getMarketAnalysisKpiValueByBranchMonth(kpi.get("KPI_ID").toString(), branchId, getMonthLastYear(date));
                 // 生成text
                 String multiple = MapUtils.getString(currentValue, "UNIT_MULTIPLE");
@@ -456,20 +501,24 @@ public class MarketingAnalysisAction extends CommonAction {
 
                 String kpiValue = formatKpiValue(currentValue);
                 String kpiValue_lastYear = formatKpiValue(lastYearValue);
+                String kpiValueNation = formatKpiValue(currentNationValue);
 
-                String kpiRank = MapUtils.getString(currentValue, "KPI_RANK");
-                String kpiRank_lastYear = MapUtils.getString(lastYearValue, "KPI_RANK");
+                String kpiRank = MapUtils.getString(currentValue, "KPI_RANK", "-");
+                String kpiRank_lastYear = MapUtils.getString(lastYearValue, "KPI_RANK", "-");
 
-                String kpiGroupRank = MapUtils.getString(currentValue, "KPI_GROUP_RANK");
-                String kpiGroupRank_lastYear = MapUtils.getString(lastYearValue, "KPI_GROUP_RANK");
+                String kpiGroupRank = MapUtils.getString(currentValue, "KPI_GROUP_RANK", "-");
+                String kpiGroupRank_lastYear = MapUtils.getString(lastYearValue, "KPI_GROUP_RANK", "-");
 
                 Map variable = new HashMap();
-                variable.put("KPI_NAME",MapUtils.getString(kpi,"KPI_NAME"));
+                variable.put("BRANCH_NAME", branchName);
+                variable.put("PERIOD", year.concat("年").concat("1-").concat(month).concat("月"));
+                variable.put("KPI_NAME", MapUtils.getString(kpi, "KPI_NAME"));
                 variable.put("UNIT", unit);
                 variable.put("UNITX", unitX);
                 variable.put("KPI_VALUE", kpiValue);
                 variable.put("KPI_VALUE_LAST_YEAR", kpiValue_lastYear);
                 variable.put("KPI_VALUE_VARIETY", minus(kpiValue, kpiValue_lastYear, multiple, format));
+                variable.put("KPI_VALUE_NATION_VARIETY", minus(kpiValue, kpiValueNation, multiple, format));
                 variable.put("KPI_RANK", kpiRank);
                 variable.put("KPI_RANK_LAST_YEAR", kpiRank_lastYear);
                 variable.put("KPI_GROUP_RANK", kpiGroupRank);
@@ -480,22 +529,22 @@ public class MarketingAnalysisAction extends CommonAction {
                 //年累计收入份额:移动55.35%（去年同期55.33%，变化0.02pp），全国排名第15位（去年同期第20位），组内排名第1位（去年同期第2位）。
                 String text_template = MapUtils.getString(kpi, "TEXT_TEMPLATE");
                 String text = FreemarkerUtil.stringReplace(text_template, variable);
-                kpi.put("TEXT", text);
+                kpi.put("TEXT", text == null ? "" : text);
             }
         }
         return kpis;
     }
 
-    private String minus(String value1, String value2, String multiple, String format) {
-        if (value1.isEmpty() || value2.isEmpty())
-            return "-";
+    private double minus(String value1, String value2, String multiple, String format) {
+        if (value1 == null || value2 == null || value1.isEmpty() || value2.isEmpty() || "-".equals(value1) || "-".equals(value2))
+            return Double.NaN;
         BigDecimal result = new BigDecimal(value1).subtract(new BigDecimal(value2));
-        if (multiple != null && !multiple.isEmpty())
-            result = result.divide(new BigDecimal(multiple));
-        if (format != null && !format.isEmpty()) {
-            return new DecimalFormat(format).format(result);
-        }
-        return result.toString();
+//        if (multiple != null && !multiple.isEmpty())
+//            result = result.divide(new BigDecimal(multiple));
+//        if (format != null && !format.isEmpty()) {
+//            return new DecimalFormat(format).format(result);
+//        }
+        return result.doubleValue();
     }
 
     // 根据配置格式化KPI值

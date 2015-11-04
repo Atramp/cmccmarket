@@ -216,7 +216,7 @@
 		    AND  B.BRANCH_ID in ($BRANCH_ID$)
 		    AND  D.KPI_ID in($KPI_ID$)
 			ORDER BY 
-				V.DATA_DATE,BRANCH_SEQ, 
+				V.DATA_DATE,BRANCH_SEQ,GROUP_ID,
 				DISPLAY_ORDER
 		]]>
 	</select>
@@ -224,9 +224,11 @@
         <![CDATA[
            SELECT
                 M.ID,
+                M.GROUP_ID,
                 M.KPI_NAME,
                 M.DATA_DATE,
                 M.KPI_VALUE,
+                M.DISPLAY_ID,
                 U.UNIT_MULTIPLE,
                 U.UNIT_NAME,
                 P.PRECISIONS_FORMAT
@@ -236,7 +238,7 @@
         INNER JOIN PRECISIONS P ON P.PRECISIONS_ID = M.PRECISIONS_ID
             WHERE RP_ID = #RP_ID#
               AND M.CHART_TYPE IS NULL
-            ORDER BY M.DISPLAY_ID, M.DATA_DATE;
+            ORDER BY M.DISPLAY_ID,M.DATA_DATE;
         ]]>
     </select>
 
