@@ -7,6 +7,7 @@ import com.teradata.market.ui.chart.ChartObject;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * 将Chart对象转换为FushinChart需要的xml串
@@ -111,7 +112,7 @@ public class FCCategoryChartProducer {
     }
 
     public String getChartXML(String template) {
-        if (template == null || template.equals(""))
+        if (StringUtils.isEmpty(template) || chart == null)
             return "";
 
         StringWriter out = new StringWriter();

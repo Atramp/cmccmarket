@@ -17,6 +17,7 @@ import org.apache.batik.transcoder.Transcoder;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.JPEGTranscoder;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.io.input.CharSequenceReader;
@@ -317,6 +318,17 @@ public class MarketingAnalysisAction extends CommonAction {
                     chart = null;
                     break;
                 }
+                // 如果没有当月值,页面不展示该条
+                boolean hasCurrentMonthData = false;
+                for (Map map : data) {
+                    if (date.equals(MapUtils.getString(map, "DATA_DATE"))) {
+                        hasCurrentMonthData = true;
+                        break;
+                    }
+
+                }
+                if (!hasCurrentMonthData)
+                    return null;
                 String[] data0 = new String[5];
                 String[] data1 = new String[5];
                 Arrays.fill(data0, "");
@@ -418,7 +430,8 @@ public class MarketingAnalysisAction extends CommonAction {
             case 4: {// 4G客户每月净增 201402至今 单省不加全国
                 chart.setSerieNames(new String[]{branchName});
                 List<LinkedHashMap> data = service.getChartData_4(MapUtils.getString((Map) ((List) kpiGroup.get("KPIS")).get(0), "KPI_ID"), branchId, date);
-                if (data == null || data.isEmpty()) {
+                // 当前月份没有数据则返回空,页面不展示
+                if (data == null || data.isEmpty() || !date.equals(MapUtils.getString(data.get(data.size() - 1), "DATA_DATE"))) {
                     chart = null;
                     break;
                 }

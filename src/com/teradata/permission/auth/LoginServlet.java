@@ -4,7 +4,6 @@ import com.teradata.adf.core.service.ServiceLocatorFactory;
 import com.teradata.permission.bean.PerUsers;
 import com.teradata.permission.service.PerUsersService;
 import com.teradata.permission.util.GlobalConstants;
-import com.teradata.permission.util.PermissionUtil;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -12,7 +11,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map;
 
 public class LoginServlet extends HttpServlet {
 
@@ -125,10 +123,7 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        Map sysMap = null;
-        sysMap = PermissionUtil.getSysParametesMap(request);
         request.getSession().removeAttribute(errorKey);
-
 
         PerUsersService perUsersService = (PerUsersService) ServiceLocatorFactory.getServiceLocator().getService("perUsersService");
         PerUsers user = perUsersService.selectUserByLogin(USER_NAME, USER_PWD);

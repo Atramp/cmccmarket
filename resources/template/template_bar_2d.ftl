@@ -1,4 +1,4 @@
-<chart <#include "root.ftl">>
+<chart <#include "root.ftl"> >
     <categories fontSize="11">
     <#list categoryNames as cat>
         <#if (limit == -1)>

@@ -144,7 +144,7 @@
         var chartID = 0;
         function drawChart(id, data, chartType, width, height) {
             FusionCharts.setCurrentRenderer("javascript");
-            var chart = new FusionCharts(chartType, chartID++, width, "300", "0", "0");
+            var chart = new FusionCharts(chartType, chartID++, width, "250", "0", "0");
             chart.setDataXML(data);
             chart.render(id);
             return chart;
@@ -259,7 +259,7 @@
                 int index = 1;
                 for (int index_group = 0; index_group < kpiGroupList.size(); index_group++) {
                     Map kpiGroup = kpiGroupList.get(index_group);
-                    if (((List) MapUtils.getObject(kpiGroup, "KPIS")).isEmpty() && MapUtils.getString(kpiGroup, "CHART_DATA", "").isEmpty())
+                    if (MapUtils.getString(kpiGroup, "CHART_DATA", "").isEmpty())
                         continue;
             %>
             <tr>
@@ -294,7 +294,6 @@
                             type: '<%=MapUtils.getString(kpiGroup,"FLASH_FILE")%>',
                             width: <%=hasText?450:750%>
                         });
-                        //drawChart('<%=MapUtils.getString(kpiGroup,"KPI_GROUP_ID")%>', '<%=MapUtils.getString(kpiGroup,"CHART_DATA")%>', '<%=MapUtils.getString(kpiGroup,"FLASH_FILE")%>', '<%=hasText?450:750%>');
                     </script>
                 </td>
             </tr>

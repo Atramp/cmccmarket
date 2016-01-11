@@ -1,6 +1,6 @@
 /**
  * Copyright 2012 By Teradata China Co.Ltd. All rights reserved
- *
+ * <p/>
  * Created on 2011-10-8
  */
 package com.teradata.market.service;
@@ -11,6 +11,7 @@ import com.teradata.market.ui.chart.ChartUtil;
 import com.teradata.market.ui.chart.fusionchart.FCCategoryChartProducer;
 import com.teradata.market.util.MarketUtil;
 import freemarker.template.Configuration;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 
