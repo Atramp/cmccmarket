@@ -1,6 +1,6 @@
 /**
  * Copyright 2014 By Teradata China Co.Ltd. All rights reserved
- *
+ * <p/>
  * Created on 2014-04-08
  */
 package com.teradata.market.ui.action;
@@ -239,7 +239,7 @@ public class MarketingResearchAction extends CommonAction {
         HttpServletResponse response = getResponse();
         OutputStream os = null;
         try {
-            String fileName = "市场调研数据.xlsx";
+            String fileName = String.format("市场调研数据(%s-%s).xlsx", startDate, endDate);
             os = response.getOutputStream();
             response.setHeader("Content-disposition", "attachment; filename=" +
                     new String(fileName.getBytes("GBK"), "ISO8859-1"));
