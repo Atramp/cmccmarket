@@ -3,10 +3,10 @@ package com.teradata.permission.bean;
 
 import com.teradata.adf.web.djn.DjnTreeNode;
 
-public class DjnTreeNodeNew extends DjnTreeNode {
+public class CheckedDjnTreeNode extends DjnTreeNode {
 
 	private boolean expanded; //展开
-	private boolean done;   //选中
+	private boolean checked;   //选中
 	private boolean download;
 	
 	
@@ -19,12 +19,12 @@ public class DjnTreeNodeNew extends DjnTreeNode {
 		this.expanded = expanded;
 	}
 
-	public boolean isDone() {
-		return done;
+	public boolean isChecked() {
+		return checked;
 	}
 
-	public void setDone(boolean done) {
-		this.done = done;
+	public void setChecked(boolean checked) {
+		this.checked = checked;
 	}
 
 	public boolean isDownload() {

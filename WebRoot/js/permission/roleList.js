@@ -19,7 +19,7 @@ Ext.onReady(function () {
         extend: 'Ext.data.Model',
         fields: [
             {name: 'text', type: 'string'},
-            {name: 'done', type: 'boolean'},
+            {name: 'checked', type: 'boolean'},
             {name: 'download', type: 'boolean'}
         ], proxy: {
             type: 'ajax',
@@ -187,37 +187,30 @@ Ext.onReady(function () {
                 model: 'treeMenu',
                 proxy: {
                     type: 'ajax',
-
                     url: '/cmccmarket/permission/selectAllMenuByRoleId.action',
                     extraParams: {
                         'ROLE_ID': roleId
                     }
 
                 },
-
                 reader: {type: 'json'},
                 folderSort: false,
                 listeners: {
                     load: function (thisObj, node, records, successful, eOpts) {
                         if (successful) {
-
                             Ext.Array.each(records, function (record) {
-
-                                if (record.get("done")) {
+                                if (record.get("checked")) {
                                     ExtArrayPush(record.get("id"));
                                 }
                                 record.eachChild(function (child) {
-                                    if (child.get("done")) {
+                                    if (child.get("checked")) {
                                         ExtArrayPush(child.get("id"));
                                     }
-
                                     child.eachChild(function (child0) {
-                                        if (child0.get("done")) {
+                                        if (child0.get("checked")) {
                                             ExtArrayPush(child0.get("id"));
                                         }
-
                                     });
-
                                 });
                             });
 
@@ -238,6 +231,7 @@ Ext.onReady(function () {
                                 });
                             });
 
+
                         }
                     }
                 }
@@ -249,7 +243,7 @@ Ext.onReady(function () {
                     header: '访问',
                     width: 100,
                     sortable: false,
-                    dataIndex: 'done',
+                    dataIndex: 'checked',
                     stopSelection: false,
                     listeners: {
                         checkchange: function (column, rowIndex, checked) {
@@ -266,10 +260,10 @@ Ext.onReady(function () {
                             //取消选中时，清空父节点的选中
                             if (!checked) {
                                 if (record.parentNode) {
-                                    record.parentNode.set('done', checked);
+                                    record.parentNode.set('checked', checked);
                                     Ext.Array.remove(SelctedIds, record.parentNode.get("id"));
                                     if (record.parentNode.parentNode) {
-                                        record.parentNode.parentNode.set('done', checked);
+                                        record.parentNode.parentNode.set('checked', checked);
                                         Ext.Array.remove(SelctedIds, record.parentNode.parentNode.get("id"));
                                     }
                                 }
@@ -280,7 +274,7 @@ Ext.onReady(function () {
                                 record.eachChild(function (child) {
                                     if (!child.get('leaf')) {
                                         child.eachChild(function (child0) {
-                                            child0.set('done', checked);
+                                            child0.set('checked', checked);
                                             if (checked) {
                                                 ExtArrayPush(child0.get("id"));
                                             } else {
@@ -290,7 +284,7 @@ Ext.onReady(function () {
                                             child0.fireEvent('checkchange', child0, checked);
                                         });
                                     }
-                                    child.set('done', checked);
+                                    child.set('checked', checked);
                                     if (checked) {
                                         ExtArrayPush(child.get("id"));
                                     } else {
@@ -457,15 +451,15 @@ Ext.onReady(function () {
                         record = view.getRecord(view.getNode(re));
                         if (record == null) continue;
                         record.eachChild(function (child) {
-                            child.set('done', false);
+                            child.set('checked', false);
                             child.set('download', false);
                             child.eachChild(function (child0) {
-                                child0.set('done', false);
+                                child0.set('checked', false);
                                 child0.set('download', false);
                             });
 
                         });
-                        record.set('done', false);
+                        record.set('checked', false);
                         record.set('download', false);
                     }
 
