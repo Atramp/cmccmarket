@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE sqlMap
+        PUBLIC "-//config.ibatis.apache.org//DTD SQL Map 2.0//EN"
+        "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="ABD">
+    <select id="getABDExtend" resultClass="UpperCaseMap">
+        <![CDATA[
+           SELECT
+           		KPI_ID,
+           		FORMAT,
+           		MULTIPLE
+		   FROM  KPI_DEFINE_ABD_EXTEND  D
+        ]]>
+    </select>
+
+    <select id="getAllDataByMonth" resultClass="UpperCaseMap" parameterClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                *
+            FROM
+              KPI_DEFINE D
+              INNER JOIN KPI_DEFINE_ABD_EXTEND E ON D.KPI_ID = E.KPI_ID
+              INNER JOIN KPI_VALUE V ON D.KPI_ID = V.KPI_ID
+              INNER JOIN BRANCH B ON V.BRANCH_ID = B.BRANCH_ID
+            WHERE V.DATA_DATE = #DATA_DATE#
+        ]]>
+    </select>
+    <select id="getMinMonth" resultClass="UpperCaseMap" parameterClass="java.util.HashMap">
+        <![CDATA[
+            SELECT MIN(DATA_DATE) AS MONTH
+                FROM (
+                    SELECT
+                        D.KPI_ID,
+                        MIN(DATA_DATE) AS DATA_DATE
+                    FROM
+                        KPI_DEFINE_ABD_EXTEND D
+                    INNER JOIN KPI_VALUE V ON D.KPI_ID = V.KPI_ID
+                   WHERE V.DATA_DATE BETWEEN #START_MONTH# AND #END_MONTH#
+                    GROUP BY KPI_ID
+                    ) X;
+        ]]>
+    </select>
+    <select id="getMaxMonth" resultClass="UpperCaseMap" parameterClass="java.util.HashMap">
+        <![CDATA[
+            SELECT MAX(DATA_DATE) AS MONTH
+                FROM (
+                    SELECT
+                        D.KPI_ID,
+                        MAX(DATA_DATE) AS DATA_DATE
+                    FROM
+                        KPI_DEFINE_ABD_EXTEND D
+                    INNER JOIN KPI_VALUE V ON D.KPI_ID = V.KPI_ID
+                   WHERE V.DATA_DATE BETWEEN #START_MONTH# AND #END_MONTH#
+                    GROUP BY KPI_ID
+                    ) X;
+        ]]>
+    </select>
+</sqlMap>

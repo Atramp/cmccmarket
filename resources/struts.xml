@@ -7,7 +7,7 @@
     <include file="struts-default.xml"/>
 
     <constant name="struts.custom.i18n.resources" value="globalMessages"/>
-    <constant name="struts.devMode" value="false"/>
+    <constant name="struts.devMode" value="true"/>
     <constant name="struts.configuration.xml.reload" value="true"/>
     <constant name="struts.i18n.reload" value="true"/>
 
@@ -16,7 +16,10 @@
             <interceptor name="exception" class="com.teradata.adf.web.exception.ADFErrorMessageInterceptor"/>
             <interceptor-stack name="tdStack">
                 <interceptor-ref name="exception"/>
-                <interceptor-ref name="defaultStack"/>
+                <interceptor-ref name="defaultStack">
+                    <param name="exception.logEnabled">true</param>
+                    <param name="exception.logLevel">error</param>
+                </interceptor-ref>
             </interceptor-stack>
         </interceptors>
 

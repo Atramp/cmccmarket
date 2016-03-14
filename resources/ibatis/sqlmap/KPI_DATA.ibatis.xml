@@ -5,7 +5,6 @@
     "http://ibatis.apache.org/dtd/sql-map-2.dtd">
 
 <sqlMap namespace="KPI_DATA">
-    
     <select id="getKpiGroupData" resultClass="UpperCaseMap" parameterClass="java.util.HashMap">
         <![CDATA[
             SELECT 

@@ -31,4 +31,9 @@
         <property name="dao" ref="commonDao"></property>
         <property name="cacheManager" ref="tdCacheManager"></property>
     </bean>
+
+    <bean id="assessmentBaseDataService" class="com.teradata.market.service.AssessmentBaseDataService">
+        <property name="dao" ref="commonDao"></property>
+        <property name="cacheManager" ref="tdCacheManager"></property>
+    </bean>
 </beans>

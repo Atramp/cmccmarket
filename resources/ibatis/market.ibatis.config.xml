@@ -6,7 +6,7 @@
 
 <sqlMapConfig>
 
-	<settings 
+	<settings
 		useStatementNamespaces="true" 
 		useColumnLabel="false" 
 	/> 
@@ -17,4 +17,5 @@
 	<sqlMap resource="ibatis/sqlmap/KPI_DATA.ibatis.xml"/>
 	<sqlMap resource="ibatis/sqlmap/BRANCH.ibatis.xml"/>
     <sqlMap resource="ibatis/sqlmap/MARKETING_ANALYSIS.ibatis.xml"/>
+	<sqlMap resource="ibatis/sqlmap/MARKETING_ABD.ibatis.xml"/>
 </sqlMapConfig>

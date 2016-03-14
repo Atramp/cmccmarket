@@ -112,7 +112,7 @@ public class MarketingAnalysisAction extends CommonAction {
         Transcoder transcoder = new JPEGTranscoder();
         transcoder.addTranscodingHint(JPEGTranscoder.KEY_QUALITY, 1.0F);
         transcoder.addTranscodingHint(JPEGTranscoder.KEY_WIDTH, 2 * Float.parseFloat(StringUtils.defaultString(width, "450")));
-        transcoder.addTranscodingHint(JPEGTranscoder.KEY_HEIGHT, 600F);
+        transcoder.addTranscodingHint(JPEGTranscoder.KEY_HEIGHT, 500F);
         TranscoderInput input = new TranscoderInput(new CharSequenceReader(svg));
         OutputStream outputStream = null;
         try {
@@ -179,7 +179,7 @@ public class MarketingAnalysisAction extends CommonAction {
             if (!checkDirExists(picFolderPath, false))// 图片目录不存在则退出
                 return;
             // 加载模板doc
-            WordprocessingMLPackage template = WordprocessingMLPackage.load(this.getClass().getResourceAsStream("/template/analysis.doc"));
+            WordprocessingMLPackage template = WordprocessingMLPackage.load(this.getClass().getResourceAsStream("/template/市场简析报告.doc"));
             // 获取文档中的表格
             List<Object> tables = getAllElementFromObject(template.getMainDocumentPart(), Tbl.class);
             Tbl table = (Tbl) tables.get(0);

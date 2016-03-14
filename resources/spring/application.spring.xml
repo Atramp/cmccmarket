@@ -24,7 +24,7 @@
             <value>com.mysql.jdbc.Driver</value>
         </property>
         <property name="url">
-            <value>jdbc:mysql://127.0.0.1:3307/cmccmarket</value>
+            <value>jdbc:mysql://127.0.0.1:3307/cmccmarket_old</value>
         </property>
         <property name="username">
             <value>root</value>

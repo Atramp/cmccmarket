@@ -45,4 +45,12 @@
         <action name="downloadDoc" class="com.teradata.market.ui.action.MarketingAnalysisAction" method="downloadDoc"/>
         <action name="saveSVG" class="com.teradata.market.ui.action.MarketingAnalysisAction" method="saveSVG"/>
     </package>
+
+    <!--评估基础数据-->
+    <package name="struts-market5" namespace="/market/marketing-abd" extends="struts-td">
+        <action name="retrieve" class="com.teradata.market.ui.action.AssessmentBaseDataAction" method="retrieve">
+            <result>/jsp/marketing-abd/index.jsp</result>
+        </action>
+        <action name="saveExcel" class="com.teradata.market.ui.action.AssessmentBaseDataAction" method="saveExcel"/>
+    </package>
 </struts>
