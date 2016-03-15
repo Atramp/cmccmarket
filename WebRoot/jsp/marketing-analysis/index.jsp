@@ -1,6 +1,8 @@
-<%@ page language="java" import="java.util.*" pageEncoding="UTF-8" %>
-<%@ page import="org.apache.commons.collections.MapUtils" %>
+<%@ page language="java" import="org.apache.commons.collections.MapUtils" pageEncoding="UTF-8" %>
 <%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="java.util.Date" %>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
 
 <%
     //获取action生成的图形数据
@@ -142,10 +144,11 @@
         var chartDataArray = new Array();
 
         var chartID = 0;
-        function drawChart(id, data, chartType, width, height) {
+        function drawChart(id, data, chartType, width) {
             FusionCharts.setCurrentRenderer("javascript");
             var chart = new FusionCharts(chartType, chartID++, width, "250", "0", "0");
             chart.setDataXML(data);
+            chart.setChartAttribute("showBorder", 0);
             chart.render(id);
             return chart;
         }
@@ -259,14 +262,16 @@
                 int index = 1;
                 for (int index_group = 0; index_group < kpiGroupList.size(); index_group++) {
                     Map kpiGroup = kpiGroupList.get(index_group);
-                    if (MapUtils.getString(kpiGroup, "CHART_DATA", "").isEmpty())
-                        continue;
             %>
             <tr>
                 <td colspan="2"><span
                         class="title"><%=index++%>、<%=MapUtils.getString(kpiGroup, "KPI_GROUP_NAME", "")%></span>
                 </td>
             </tr>
+            <%
+                if (MapUtils.getString(kpiGroup, "CHART_DATA", "").isEmpty())
+                    continue;
+            %>
             <tr>
                 <%
                     List<Map> kpiList = (List<Map>) kpiGroup.get("KPIS");

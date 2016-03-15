@@ -17,7 +17,6 @@ import org.apache.batik.transcoder.Transcoder;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.JPEGTranscoder;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.io.input.CharSequenceReader;
@@ -38,9 +37,7 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Created by alex on 15-3-18.
@@ -102,6 +99,7 @@ public class MarketingAnalysisAction extends CommonAction {
     }
 
     public void saveSVG() throws IOException {
+
         String svg = getRequest().getParameter("SVG");
         String ID = getRequest().getParameter("ID");
         String width = getRequest().getParameter("WIDTH");
@@ -120,17 +118,14 @@ public class MarketingAnalysisAction extends CommonAction {
             TranscoderOutput output = new TranscoderOutput(outputStream);
             transcoder.transcode(input, output);
         } catch (Exception e) {
-            e.printStackTrace();
             try {
                 getResponse().sendError(500);
             } catch (IOException e1) {
-                e1.printStackTrace();
             }
         } finally {
             try {
                 outputStream.close();
             } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }
@@ -144,7 +139,7 @@ public class MarketingAnalysisAction extends CommonAction {
                 if (file.exists()) {
                     HttpServletResponse response = getResponse();
                     response.setHeader("Content-disposition", "attachment; filename="
-                            + new String(getRequest().getParameter("fileName").getBytes("GBK"), "ISO8859-1"));
+                            + new String(getRequest().getParameter("fileName").getBytes(), "ISO8859-1"));
                     response.setContentType("application/ms-doc");// 定义输出类型
                     FileInputStream fileInputStream = new FileInputStream(file);
                     outputStream = response.getOutputStream();
@@ -632,7 +627,8 @@ public class MarketingAnalysisAction extends CommonAction {
                 Inline replacementValue = (Inline) replacements.get(name);
                 if (replacementValue != null) {
                     inline.setGraphic(replacementValue.getGraphic());
-                }
+                } else
+                    workingRow = null;
             }
         }
         reviewTable.getContent().add(workingRow);
