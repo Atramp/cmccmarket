@@ -149,6 +149,7 @@
             var chart = new FusionCharts(chartType, chartID++, width, "250", "0", "0");
             chart.setDataXML(data);
             chart.setChartAttribute("showBorder", 0);
+            chart.setChartAttribute("plotSpacePercent", 60);
             chart.render(id);
             return chart;
         }

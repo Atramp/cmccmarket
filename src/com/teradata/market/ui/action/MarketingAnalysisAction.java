@@ -139,7 +139,7 @@ public class MarketingAnalysisAction extends CommonAction {
                 if (file.exists()) {
                     HttpServletResponse response = getResponse();
                     response.setHeader("Content-disposition", "attachment; filename="
-                            + new String(getRequest().getParameter("fileName").getBytes(), "ISO8859-1"));
+                            + new String(getRequest().getParameter("fileName").getBytes("GBK"), "ISO8859-1"));
                     response.setContentType("application/ms-doc");// 定义输出类型
                     FileInputStream fileInputStream = new FileInputStream(file);
                     outputStream = response.getOutputStream();
